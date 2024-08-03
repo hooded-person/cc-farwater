@@ -1,9 +1,13 @@
 local finder = peripheral.wrap("left")
 
-local h = fs.open("data.json","r")
-local data = h.readAll()
-local data = textutils.unserializeJSON(data)
-if not data then data = {} end
+if fs.exists("data.json") then
+    local h = fs.open("data.json","r")
+    local data = h.readAll()
+    local data = textutils.unserializeJSON(data)
+    if not data then data = {} end
+else
+    local data = {}
+end
 
 local h = fs.open("chunks.json","r")
 local chunks = textutils.unserializeJSON(h.readAll())
