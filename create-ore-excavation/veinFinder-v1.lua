@@ -8,12 +8,14 @@ if fs.exists("data.json") then
 else
     local data = {}
 end
-
-local h = fs.open("chunks.json","r")
-local chunks = textutils.unserializeJSON(h.readAll())
-h.readAll()
-if not chunks then chunks = {} end
-
+if fs.exists("chunks.json") then
+    local h = fs.open("chunks.json","r")
+    local chunks = textutils.unserializeJSON(h.readAll())
+    h.readAll()
+    if not chunks then chunks = {} end
+else
+    local chunks = {}
+end
 
 local pos = data.pos
 if not pos or pos == {} then
