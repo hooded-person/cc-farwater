@@ -12,10 +12,10 @@ if not chunks then chunks = {} end
 
 
 local pos = data.pos
-if not pos then
+if not pos or pos == {} then
     pos = gps.locate()
     if not pos then
-        print("failed to located turtle's position\nplease enter turtle's current pos (comma seperated e.g. 'x,y,z')")
+        print("failed to located turtle's position\nenter turtle's current pos (comma seperated e.g. 'x,y,z')")
         while true do
             pos = read()
             pos = pos:gsub(" ","")
@@ -25,7 +25,7 @@ if not pos then
             if #values ~= 3 then
                 success = false
                 term.setTextColor(colors.red)
-                print("please enter 3 numbers, seperated by comma's (e.g. 'x,y,z')")
+                print("enter 3 numbers, seperated by comma's (e.g. 'x,y,z')")
                 term.setTextColor(colors.white)
             else
                 for i=1, #values do
@@ -44,6 +44,18 @@ else
     pos = vector.new(table.unpack(pos))
 end
 local facing = data.facing
+if not facing or facing == "" then
+    while true do
+        print("enter the facing direction of turtle ('n','e','s','w')")
+        local input = read()
+        local directions = {["n"]="north", ["e"]="east", ["s"]="south", ["w"]="west"}
+        local direction = directions[input]
+        if direction then print("set direction to '"..direction.."'"); data.facing = direction; updateData() end
+        term.setTextColor(colors.red)
+        print("enter one of the following values: 'n','e','s','w'")
+        term.setTextColor(colors.white)
+    end
+end
 
 local function vectorToArray(vector)
     local array = {}
