@@ -1,5 +1,9 @@
 local finder = peripheral.wrap("left")
-
+-- DEFINE VARS
+local data
+local chunks
+local pos
+local facing
 -- DEFINE DATA FUNCTIONS
 -- define vector to array conversion function
 local function vectorToArray(vector)
@@ -8,17 +12,13 @@ local function vectorToArray(vector)
     return array
 end
 -- define data update function
-local function updateData(only)
+local function updateData()
     local h = fs.open("data.json","r")
     local data = textutils.unserializeJSON(h.readAll())
     h.close()
+    data.pos = vectorToArray(pos)
+    data.facing = facing
     local h = fs.open("data.json","w")
-    if only == "pos" or not only then
-        data.pos = vectorToArray(pos)
-    end
-    if only == "facing" or not only then
-        data.facing = facing
-    end
     h.write(textutils.serializeJSON(data))
     h.close()
 end
@@ -29,28 +29,34 @@ local function updateChunks(chunks)
     h.close()
 end
 
-local data
-local chunks
+
 if fs.exists("data.json") then
     local h = fs.open("data.json","r")
     data = h.readAll()
     data = textutils.unserializeJSON(data)
-    if not data then data = {} end
 else
     data = {}
 end
+if not data then data = {
+    ["pos"]={},
+    ["areaDir"]="",
+    ["areaSize"]={},
+    ["facing"]=""
+} end
 
 if fs.exists("chunks.json") then
     local h = fs.open("chunks.json","r")
     chunks = textutils.unserializeJSON(h.readAll())
     h.readAll()
-    if not chunks then chunks = {} end
 else
     chunks = {}
 end
+if not chunks then chunks = {} end
 
-local pos = data.pos
+pos = data.pos
+print("after asignment"..textutils.serializeJSON(pos))
 if not pos or pos == {} then
+    print("defining pos")
     pos = gps.locate()
     if not pos then
         print("failed to located turtle's position\nenter turtle's current pos (comma seperated e.g. 'x,y,z')")
@@ -81,21 +87,21 @@ if not pos or pos == {} then
 else
     pos = vector.new(table.unpack(pos))
 end
-local facing = data.facing
+facing = data.facing
+data.pos = vectorToArray(pos)
+updateData()
 if not facing or facing == "" then
     while true do
         print("enter the facing direction of turtle ('n','e','s','w')")
         local input = read()
         local directions = {["n"]="north", ["e"]="east", ["s"]="south", ["w"]="west"}
         local direction = directions[input]
-        if direction then print("set direction to '"..direction.."'"); data.facing = direction; updateData("facing") end
+        if direction then print("set direction to '"..direction.."'"); data.facing = direction; updateData() end
         term.setTextColor(colors.red)
         print("enter one of the following values: 'n','e','s','w'")
         term.setTextColor(colors.white)
     end
 end
-
-data.pos = vectorToArray(pos)
 
 
 local array = vectorToArray(pos)
@@ -207,6 +213,8 @@ if toMove[1] ~= 0 then
 end
 --start parsing area
 local areaSize = data.areaSize
+local fuelCost = areaSize[1] * areaSize[2] * 16 - 16
+if turtle.getFuelLevel() ~= "unlimited" and turtle.getFuelLevel() < fuelCost then 
 local areaDir = data.areaDir
 local directions = { ["n"]="north", ["e"]="east", ["s"]="south", ["w"]="west" }
 local dirX = {"east","west"}
