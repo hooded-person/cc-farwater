@@ -1,3 +1,8 @@
+-- recieve args
+local args = { ... }
+local autonomous = args[1] -- if true dont ask for user confirmation to start scanning
+
+local version = "2"
 local finder = peripheral.wrap("left")
 -- DEFINE VARS
 local data
@@ -5,6 +10,13 @@ local chunks
 local pos
 local facing
 -- DEFINE DATA FUNCTIONS
+-- define clear function
+local function clear(only)
+    term.clear()
+    term.setCursorPos(1,1)
+    if only ~= true then print("veinFinder v"..version) end
+end
+clear() -- clearing screen after function def
 -- define vector to array conversion function
 local function vectorToArray(vector)
     local array = {}
@@ -28,7 +40,37 @@ local function updateChunks(chunks)
     h.write(textutils.serialize(chunks))
     h.close()
 end
-
+-- define attempt refuel function (not a data func but still needed here already)
+local function attemptRefuel(refuelTo, hide)
+    clear()
+    if hide ~= true then print("fuel level to low, searching for fuel\n"..turtle.getFuelLevel().."/"..refuelTo) end
+    for i = 1, 4*4 do
+        turtle.select(i)
+        turtle.refuel()
+        if turtle.getFuelLevel() >= refuelTo then return true end
+    end
+        clear()
+        print("did not find any (or enough)fuel, place fuel in last slot and press any key\n"..turtle.getFuelLevel().."/"..refuelTo)
+    while true do
+        repeat 
+            local event = os.pullEvent("key")
+        until event == "key"
+        turtle.select(16)
+        if not turtle.refuel() then 
+            clear()
+            print("did not find any fuel, place fuel in last slot and press any key\n"..turtle.getFuelLevel().."/"..refuelTo)
+            goto continue
+        end
+        if turtle.getFuelLevel() >= refuelTo then
+            return true 
+        else
+            clear()
+            print("more fuel is needed, place fuel in last slot and press any key\n"..turtle.getFuelLevel().."/"..refuelTo)
+        end
+        ::continue::
+    end    
+    return false
+end
 
 if fs.exists("data.json") then
     local h = fs.open("data.json","r")
@@ -54,9 +96,8 @@ end
 if not chunks then chunks = {} end
 
 pos = data.pos
-print("after asignment"..textutils.serializeJSON(pos))
-if not pos or pos == {} then
-    print("defining pos")
+if not pos or #pos == 0 then
+    print("defining pos..")
     pos = gps.locate()
     if not pos then
         print("failed to located turtle's position\nenter turtle's current pos (comma seperated e.g. 'x,y,z')")
@@ -64,7 +105,7 @@ if not pos or pos == {} then
             pos = read()
             pos = pos:gsub(" ","")
             local values = {}
-            for value in pos:gmatch("%w+") do table.insert(values, tonumber(value)) end
+            for value in pos:gmatch("-?%w+") do table.insert(values, tonumber(value)) end
             local success = true
             if #values ~= 3 then
                 success = false
@@ -81,7 +122,14 @@ if not pos or pos == {} then
                     end
                 end
             end
-            if success then pos = vector.new(table.unpack(values)); break end
+            if success then pos = vector.new(table.unpack(values)); 
+                print("set pos to '"..pos:tostring().."', is this correct (y/n)")
+                local event, key
+                repeat 
+                    event, key = os.pullEvent('key')
+                until event == 'key' and (key == 89 or key == 78)
+                if key == 89 then break else print("enter turtle's current pos (comma seperated e.g. 'x,y,z')") end
+            end
         end
     end
 else
@@ -96,7 +144,7 @@ if not facing or facing == "" then
         local input = read()
         local directions = {["n"]="north", ["e"]="east", ["s"]="south", ["w"]="west"}
         local direction = directions[input]
-        if direction then print("set direction to '"..direction.."'"); data.facing = direction; updateData() end
+        if direction then print("set direction to '"..direction.."'"); facing = direction; updateData(); break end
         term.setTextColor(colors.red)
         print("enter one of the following values: 'n','e','s','w'")
         term.setTextColor(colors.white)
@@ -106,6 +154,8 @@ end
 
 local array = vectorToArray(pos)
 local toMove = { array[1]%16, array[3]%16 }
+local fuelCost = toMove[1] + toMove[2]
+if turtle.getFuelLevel() ~= "unlimited" and turtle.getFuelLevel() < fuelCost then assert(attemptRefuel(fuelCost),"could not refuel (somehow)") end
 -- DEFINE FUNCTIONS
 -- define movement functions
 local function turnLeft()
@@ -211,10 +261,23 @@ if toMove[1] ~= 0 then
     turnLeft()
     moveX()
 end
+-- await user input if set
+if autonomous ~= true then
+    print("start scanning for veins? (y/n)")
+    local event, key
+    repeat 
+        event, key = os.pullEvent('key')
+    until event == 'key' and (key == 89 or key == 78)
+    if key == 78 then
+        clear(true)
+        print("ended veinFinder v"..version)
+        return
+    end
+end
 --start parsing area
 local areaSize = data.areaSize
 local fuelCost = areaSize[1] * areaSize[2] * 16 - 16
-if turtle.getFuelLevel() ~= "unlimited" and turtle.getFuelLevel() < fuelCost then 
+if turtle.getFuelLevel() ~= "unlimited" and turtle.getFuelLevel() < fuelCost then assert(attemptRefuel(fuelCost),"could not refuel (somehow)") end
 local areaDir = data.areaDir
 local directions = { ["n"]="north", ["e"]="east", ["s"]="south", ["w"]="west" }
 local dirX = {"east","west"}
