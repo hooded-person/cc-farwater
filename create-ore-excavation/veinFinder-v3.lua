@@ -277,10 +277,6 @@ if toMove[1] ~= 0 then
     turnLeft()
     moveX()
 end
--- set areasize and areadir
-if not areaSize or #areaSize ~= 2 then
-    print()
-end
 -- MENU FUNCTIONS
 -- select option
 local function select(options) while true do
@@ -298,13 +294,60 @@ local function select(options) while true do
     term.setTextColor(colors.white)
     sleep(1.5)
 end end 
+-- SETTINGS
+-- areaSize
+local function setAreaSize()
+    while true do
+        print("set area size (width,height)")
+        size = read()
+        size = size:gsub(" ","")
+        local values = {}
+        for value in size:gmatch("-?%w+") do table.insert(values, tonumber(value)) end
+        local success = true
+        if #values ~= 2 then
+            success = false
+            term.setTextColor(colors.red)
+            print("enter 2 numbers, seperated by comma's (e.g. 'width,height')")
+            term.setTextColor(colors.white)
+        else
+            for i=1, #values do
+                if not type(values[i]) == "number" then 
+                    success = false
+                    term.setTextColor(colors.red)
+                    print("all 2 values must be numbers (e.g. 'width,height')")
+                    term.setTextColor(colors.white) 
+                end
+            end
+        end
+        if succes then
+            areaSize = values
+            updateDate()
+            break
+        end
+    end
+end
+-- main selection menu
+local function settings()
+    local menuOptions = {
+        {"areaSize",setAreaSize,{}},
+        {"areaDir",setAreaDir,{}}
+    }
+    local index = select(menuOptions)
+    local option = menuOptions[index]
+    if option[2](table.unpack(option[3])) == "end" then menu = false end
+    if option[4] then sleep(1.5) end
+end
 -- define the options
 local options = {
     {"start scanning",function()return "end" end,{}},
-    {"visualise area",print,{"not implemented yet"},true},
-    {"edit settings"},
+    {"visualise area",print,{"not implemented yet, and wont be soon"},true},
+    {"edit settings",settings,{}},
     {"exit",os.queueEvent,{"terminate"}},
 }
+-- set areasize and areadir
+if not areaSize or #areaSize ~= 2 then
+    print()
+end
 -- await user input if not autonomous
 local menu = true
 if autonomous ~= true then while menu do
