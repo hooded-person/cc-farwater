@@ -333,14 +333,15 @@ local function setSetting(name, setTemplate, setType, setConditions)
     print(setName)
     while true do
         print("set " .. name .. " (" .. setTemplate .. ")")
-        size = read()
-        size = size:gsub(" ", "")
+        local output
+        local input = read()
+        input = input:gsub(" ", "")
         local values
         if setType == "table" and setConditions[2] == "int" then
             values = {}
-            for value in size:gmatch("-?%w+") do table.insert(values, tonumber(value)) end
+            for value in input:gmatch("-?%w+") do table.insert(values, tonumber(value)) end
         elseif setType == "string" then
-            values = input
+            output = input
         end
         local success = true
         if setType == "table" then
@@ -359,13 +360,16 @@ local function setSetting(name, setTemplate, setType, setConditions)
                     end
                 end
             end
+            if success then output = values end
         elseif setType == "string" then
             local optionTable = {}
             for i = 1, #setConditions[1] do
-                table.insert(optionTable, #setConditions[1][i], true)
+                optionTable[setConditions[1][i]] = true
             end
-            print(textutils.serialize(optionTable))
-            if optionTable[input] then else
+            print(input)
+            if optionTable[input] then
+                print("setting '"..setName.."' to "..output)
+            else
                 term.setTextColor(colors.red)
                 print("please enter one of the following (e.g. '" .. setTemplate .. "')")
                 term.setTextColor(colors.white)
@@ -373,8 +377,8 @@ local function setSetting(name, setTemplate, setType, setConditions)
             end
         end
         if success then
-            settings[setName] = values
-            print(setName..": "..values)
+            settings[setName] = output
+            print(setName..": "..output)
             sleep(3)
             updateData()
             break
