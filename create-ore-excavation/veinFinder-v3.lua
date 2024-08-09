@@ -4,7 +4,7 @@ local autonomous = args[1] -- if true dont ask for user confirmation to start sc
 
 local version = "3"
 -- assert PERIPHERALS
-if not peripheral.getType("left") == "coe_vein_finder" then
+if not (peripheral.getType("left") and peripheral.getType("left") == "coe_vein_finder") then
     term.setTextColor(colors.red)
     print("ERROR: left slot does not contain an 'createoreexcavation:vein_finder', attach and restart")
     term.setTextColor(colors.white)
@@ -14,7 +14,7 @@ local finder = peripheral.wrap("left")
 if peripheral.getType("right") ~= "modem" then
     term.setTextColor(colors.orange)
     print(
-    "WARN: left slot does not contain an 'computercraft:wireless_modem' or 'computercraft:wireless_modem_advanced'")
+        "WARN: left slot does not contain an 'computercraft:wireless_modem' or 'computercraft:wireless_modem_advanced'")
     term.setTextColor(colors.white)
     sleep(1.5)
 else
@@ -124,9 +124,6 @@ else
     local h = fs.open("data.json", "w")
     h.close()
 end
-print(textutils.serialize(data))
-print(not data)
-print(#data)
 if not data or next(data) == nil then
     data = {
         ["pos"] = {},
@@ -325,11 +322,15 @@ if toMove[1] ~= 0 then
 end
 -- MENU FUNCTIONS
 -- select option
-local function select(options)
+local function select(options,currentValues)
+    if currentValues and #options ~= #currentValues then currentValues = nil end
     while true do
         clear()
         for i = 1, #options do
-            print(tostring(i) .. ". " .. options[i][1])
+            if currentValues then 
+                if type(currentValues[i]) == "table" then currentValues[i] = table.concat(currentValues[i], ",") end 
+                print(tostring(i)..". "..options[i][1].." = "..currentValues[i])
+            else print(tostring(i) .. ". " .. options[i][1]) end
         end
         write("> ")
         local input = read()
@@ -357,7 +358,6 @@ local function setSetting(name, setTemplate, setType, setConditions)
     -- if type INT conditions: min(int), max(int)
     local setName = name:gsub("(%l)(%w*)", function(a, b) return string.upper(a) .. b end):gsub(" ", ""):gsub("^(.)(.*)",
         function(a, b) return string.lower(a) .. b end)
-    print(setName)
     while true do
         print("set " .. name .. " (" .. setTemplate .. ")")
         local output
@@ -393,9 +393,7 @@ local function setSetting(name, setTemplate, setType, setConditions)
             for i = 1, #setConditions[1] do
                 optionTable[setConditions[1][i]] = true
             end
-            print(input)
             if optionTable[input] then
-                print("setting '" .. setName .. "' to " .. output)
             else
                 term.setTextColor(colors.red)
                 print("please enter one of the following (e.g. '" .. setTemplate .. "')")
@@ -404,8 +402,12 @@ local function setSetting(name, setTemplate, setType, setConditions)
             end
         end
         if success then
+            if setType == "table" then
+                print("setting '" .. setName .. "' to", table.unpack(output))
+            else
+                print("setting '" .. setName .. "' to", output)
+            end
             settings[setName] = output
-            print(setName .. ": " .. output)
             sleep(3)
             updateData()
             break
@@ -413,7 +415,7 @@ local function setSetting(name, setTemplate, setType, setConditions)
     end
 end
 -- main selection menu
-local function settings()
+local function settingsMenu()
     local menuOptions = {
         { "areaSize", setSetting, {
             "area size",
@@ -428,7 +430,9 @@ local function settings()
             { { "ne", "nw", "se", "sw", "en", "wn", "es", "ws" } }
         } }
     }
-    local index = select(menuOptions)
+    local currentValues = {}
+    for i=1,#menuOptions do currentValues[i] = settings[menuOptions[i][1]] end
+    local index = select(menuOptions,currentValues)
     local option = menuOptions[index]
     if option[2](table.unpack(option[3])) == "end" then menu = false end
     if option[4] then sleep(1.5) end
@@ -437,12 +441,25 @@ end
 local options = {
     { "start scanning", function() return "end" end, {} },
     { "visualise area", print,                       { "not implemented yet, and wont be soon" }, true },
-    { "edit settings",  settings,                    {} },
+    { "edit settings",  settingsMenu,                {} },
     { "exit",           os.queueEvent,               { "terminate" } },
 }
 -- set areasize and areadir
-if not areaSize or #areaSize ~= 2 then
-    print()
+if not settings.areaSize or #settings.areaSize ~= 2 then
+    setSetting(table.unpack({
+        "area size",
+        "width,height",
+        "table",
+        { 2, "int" }
+    }))
+end
+if not settings.areaDir or #settings.areaDir ~= 2 then
+    setSetting(table.unpack({
+        "area dir",
+        "wn",
+        "string",
+        { { "ne", "nw", "se", "sw", "en", "wn", "es", "ws" } }
+    }))
 end
 -- await user input if not autonomous
 local menu = true
