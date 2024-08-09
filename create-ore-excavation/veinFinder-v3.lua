@@ -39,6 +39,7 @@ local facing
 local areaSize
 local areaDir
 local settings = {}
+local state = {}
 -- DEFINE DATA FUNCTIONS
 -- define clear function
 local function clear(only)
@@ -70,6 +71,7 @@ local function updateData()
     data.facing = facing
     data.areaSize = settings.areaSize
     data.areaDir = settings.areaDir
+    data.state = state
     local h = fs.open("data.json", "w")
     h.write(textutils.serializeJSON(data))
     h.close()
@@ -129,7 +131,10 @@ if not data or next(data) == nil then
         ["pos"] = {},
         ["areaDir"] = "",
         ["areaSize"] = {},
-        ["facing"] = ""
+        ["facing"] = "",
+        ["state"]={
+            ["chunkPos"]={1,1}
+        }
     }
 end
 
@@ -144,6 +149,7 @@ if not chunks then chunks = {} end
 pos = data.pos
 settings.areaSize = data.areaSize
 settings.areaDir = data.areaDir
+state = data.state
 if not pos or #pos == 0 then
     print("defining pos..")
     pos = gps.locate()
@@ -484,8 +490,14 @@ local directions = { ["n"] = "north", ["e"] = "east", ["s"] = "south", ["w"] = "
 local dirX = { "east", "west" }
 local dirZ = { "south", "north" }
 turnTo(directions[string.sub(areaDir, 1, 1)])
+local loadI = true
+local loadJ = true
 for i = 1, areaSize[1] do
+    if loadI then i = state.chunkPos[1];loadI=false end
+    state.chunkPos[1] = i
     for j = 1, areaSize[2] do
+        if loadJ then j = state.chunkPos[2];loadJ=false end
+        state.chunkPos[2] = j
         local chunkX = tostring(math.floor(vectorToArray(pos)[1] / 16))
         local chunkY = tostring(math.floor(vectorToArray(pos)[3] / 16))
         local chunkCoord = chunkX .. "." .. chunkY
