@@ -3,7 +3,34 @@ local args = { ... }
 local autonomous = args[1] -- if true dont ask for user confirmation to start scanning
 
 local version = "3"
+-- assert PERIPHERALS
+if not peripheral.getType("left") == "coe_vein_finder" then
+    term.setTextColor(colors.red)
+    print("ERROR: left slot does not contain an 'createoreexcavation:vein_finder', attach and restart")
+    term.setTextColor(colors.white)
+    return
+end
 local finder = peripheral.wrap("left")
+if peripheral.getType("right") ~= "modem" then
+    term.setTextColor(colors.orange)
+    print(
+    "WARN: left slot does not contain an 'computercraft:wireless_modem' or 'computercraft:wireless_modem_advanced'")
+    term.setTextColor(colors.white)
+    sleep(1.5)
+else
+    local modem = peripheral.wrap("right")
+end
+-- assert ITEMS
+local items = { "minecraft:cobblestone", "minecraft:diamond_pickaxe" }
+for i = 1, #items do
+    turtle.select(i)
+    if not (turtle.getItemDetail() and turtle.getItemDetail().name == items[i]) then
+        term.setTextColor(colors.red)
+        print("ERROR: turtle slot 1 does not contain item '" .. items[i] .. "'")
+        term.setTextColor(colors.white)
+        return
+    end
+end
 -- DEFINE VARS
 local data
 local chunks
@@ -368,7 +395,7 @@ local function setSetting(name, setTemplate, setType, setConditions)
             end
             print(input)
             if optionTable[input] then
-                print("setting '"..setName.."' to "..output)
+                print("setting '" .. setName .. "' to " .. output)
             else
                 term.setTextColor(colors.red)
                 print("please enter one of the following (e.g. '" .. setTemplate .. "')")
@@ -378,7 +405,7 @@ local function setSetting(name, setTemplate, setType, setConditions)
         end
         if success then
             settings[setName] = output
-            print(setName..": "..output)
+            print(setName .. ": " .. output)
             sleep(3)
             updateData()
             break
@@ -398,7 +425,7 @@ local function settings()
             "area dir",
             "wn",
             "string",
-            {{ "ne", "nw", "se", "sw", "en", "wn", "es", "ws" }}
+            { { "ne", "nw", "se", "sw", "en", "wn", "es", "ws" } }
         } }
     }
     local index = select(menuOptions)
