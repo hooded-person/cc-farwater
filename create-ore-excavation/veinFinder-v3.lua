@@ -495,14 +495,8 @@ for i = 1, areaSize[1] do
         if j ~= areaSize[2] then move("f", 16) end
     end
     if i ~= areaSize[1] then
-        if i % 2 == 1 then
-            turnRight()
-            move("f", 16)
-            turnRight()
-        else
-            turnLeft()
-            move("f", 16)
-            turnLeft()
-        end
+        turnTo(directions[string.sub(areaDir, 2, 2)])
+        move("f", 16)
+        turnTo(directions[string.sub(areaDir, 1, 1)])
     end
 end
