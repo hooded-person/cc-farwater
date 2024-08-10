@@ -3,6 +3,7 @@ local args = { ... }
 local autonomous = args[1] -- if true dont ask for user confirmation to start scanning
 
 local version = "3"
+local server = "https://localhost:3000"
 -- assert PERIPHERALS
 if not (peripheral.getType("left") and peripheral.getType("left") == "coe_vein_finder") then
     term.setTextColor(colors.red)
@@ -81,6 +82,11 @@ local function updateChunks(chunks)
     local h = fs.open("chunks.json", "w")
     h.write(textutils.serialize(chunks))
     h.close()
+    http.request({
+        method = "POST",
+        url = server.."api/chunks",
+        body = textutils.serialiseJSON(chunks)
+    })
 end
 -- define attempt refuel function (not a data func but still needed here already)
 local function attemptRefuel(refuelTo, hide)
