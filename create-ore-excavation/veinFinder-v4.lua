@@ -3,7 +3,6 @@ local args = { ... }
 local autonomous = args[1] -- if true dont ask for user confirmation to start scanning
 
 local version = "3"
-local server = "https://localhost:3000"
 -- assert PERIPHERALS
 if not (peripheral.getType("left") and peripheral.getType("left") == "coe_vein_finder") then
     term.setTextColor(colors.red)
@@ -84,7 +83,7 @@ local function updateChunks(chunks)
     h.close()
     http.request({
         method = "POST",
-        url = server.."api/chunks",
+        url = settings.host.."api/chunks",
         body = textutils.serialiseJSON(chunks)
     })
 end
