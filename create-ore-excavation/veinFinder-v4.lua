@@ -456,7 +456,9 @@ local function settingsMenu()
                 }
                 local success, reason = http.checkURL(input)
                 if not success and askReasons[reason] then
+                    term.setTextColor(colors.red)
                     print(reason)
+                    term.setTextColor(colors.white)
                     print("use anyway?")
                     local event, key
                     repeat
