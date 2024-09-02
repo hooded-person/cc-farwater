@@ -449,7 +449,7 @@ local function settingsMenu()
             "host",
             "https://example.com",
             "string",
-            http.checkUrl
+            http.checkURL
           }
         },
     }
