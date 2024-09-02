@@ -83,7 +83,7 @@ local function updateChunks(chunks)
     h.close()
     http.request({
         method = "POST",
-        url = settings.host.."api/chunks",
+        url = settings.host.."api/chunks/"..settings.server,
         body = textutils.serialiseJSON(chunks)
     })
 end
@@ -140,7 +140,8 @@ if not data or next(data) == nil then
         ["state"]={
             ["chunkPos"]={1,1}
         },
-        ["host"] = ""
+        ["host"] = "",
+        ["server"] = "",
     }
 end
 
@@ -156,6 +157,7 @@ pos = data.pos
 settings.areaSize = data.areaSize
 settings.areaDir = data.areaDir
 settings.host = data.host
+settings.server = data.server
 state = data.state
 if not pos or #pos == 0 then
     print("defining pos..")
@@ -474,6 +476,14 @@ local function settingsMenu()
             end
           }
         },
+        { "server", setSetting, {
+            "server",
+            "farwater-a",
+            "string",
+            function (input)
+                return true
+            end
+        } },
     }
     local currentValues = {}
     for i=1,#menuOptions do currentValues[i] = settings[menuOptions[i][1]] end
