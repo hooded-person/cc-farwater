@@ -449,7 +449,28 @@ local function settingsMenu()
             "host",
             "https://example.com",
             "string",
-            http.checkURL
+            function (input)
+                local askReasons = {
+                    ["Unknown host"] = true,
+                    
+                }
+                local success, reason = http.checkURL(input)
+                if not success and askReasons[reason] then
+                    print(reason)
+                    print("use anyway?")
+                    local event, key
+                    repeat
+                        event, key = os.pullEvent('key')
+                    until event == 'key' and (key == 89 or key == 78)
+                    if key == 89 then success = true end
+                elseif not success then
+                    term.setTextColor(colors.red)
+                    print(reason)
+                    term.setTextColor(colors.white)
+                end
+                    
+                return success
+            end
           }
         },
     }
