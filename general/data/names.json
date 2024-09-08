@@ -1,6 +1,7 @@
 {
     "self":"computer_19",
     "controller":"storagedrawers:controller_5",
+    "brake":"redrouter_37"
     "monitors":{
         "mainControl":"monitor_7"
     },
