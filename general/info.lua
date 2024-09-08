@@ -1,5 +1,5 @@
 {
-  "toDownload":{
+  toDownload = {
     "data/names.json",
   },
 }
