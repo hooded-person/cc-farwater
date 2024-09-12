@@ -1,0 +1,14 @@
+Dear <user>,
+                         
+Your shop has run out of stock. 
+Please restock your shop before 
+<deadline>.
+If your shop is not 
+restocked before this 
+deadline, it will be 
+removed and all remaining
+stock will be confiscated
+                         
+kindest regards,
+S.D. management
+<date>

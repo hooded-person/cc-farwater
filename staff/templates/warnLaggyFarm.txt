@@ -1,0 +1,17 @@
+Dear <user>,
+ 
+We have noticed that 
+your farm has caused 
+stacks of dropped 
+items, due to
+<cause>
+instead of using
+this please user
+<solution>
+you have until
+<deadline>
+or your farm will be removed
+
+kindest regards,
+Farwater Staff
+<date>
