@@ -6,11 +6,12 @@ stacks of dropped
 items, due to
 <cause>
 instead of using
-this please user
+this, please use
 <solution>
 you have until
 <deadline>
-or your farm will be removed
+or your farm will 
+be removed
 
 kindest regards,
 Farwater Staff
