@@ -1,12 +1,7 @@
 local templateDir = "templates/"
 if templateDir:sub(-1) ~= "/" then templateDir = templateDir .. "/" end
-local printerLib = require("libs/printer")
-local printer = printerLib.printer(
-    { "minecraft:barrel_1", "minecraft:barrel_2" },
-    { "minecraft:barrel_0" },
-    "minecraft:barrel_3",
-    { "printer_2" }
-)
+local spclib = require("libs/spclib")
+local printerHost = 15
 -- use debug() instead of print() for debugging for easier removal(or disabling) of the statments after debugging is done
 local debug = print
 -- load and prepare templates
@@ -22,33 +17,37 @@ local templateListBuild = {
 }
 local templates = {}
 for i, templatePath in ipairs(templatesStrings) do
-    template = templatePath:gsub(".txt", "")
-    local keywords = {}
-    local str = template:gsub("^%U*", "")
-    for wrd in str:gmatch("%u%U*") do
-        table.insert(keywords, string.lower(wrd))
+    local validTemplate = templatePath:sub(-5) == ".sdoc" 
+        and templatePath:sub(1,4) ~= "hide"
+    if validTemplate then
+        template = templatePath:gsub(".sdoc", "")
+        local keywords = {}
+        local str = template:gsub("^%U*", "")
+        for wrd in str:gmatch("%u%U*") do
+            table.insert(keywords, string.lower(wrd))
+        end
+        -- load template
+        local h = fs.open(templateDir .. templatePath, "r")
+        local templateContent = h.readAll()
+        h.close()
+        -- get data vars in template
+        local dataVars = {}
+        for match in templateContent:gmatch("<([^>]*)>") do
+            table.insert(dataVars, match)
+        end
+        -- setup table
+        typeIndex = string.upper(template:match("^%U*")) -- warn or evic
+        if not templates[typeIndex] then templates[typeIndex] = {} end
+        table.insert(templates[typeIndex], {
+            string.upper(template:match("^%U*")),
+            table.concat(keywords, " "),
+            dataVars,
+            templatePath,
+        })
+        -- setup values while preventing duplicates
+        templateListBuild["type"][typeIndex] = true
+        --templateListBuild["reason"][table.concat(keywords, " ")] = true
     end
-    -- load template
-    local h = fs.open(templateDir .. templatePath, "r")
-    local templateContent = h.readAll()
-    h.close()
-    -- get data vars in template
-    local dataVars = {}
-    for match in templateContent:gmatch("<([^>]*)>") do
-        table.insert(dataVars, match)
-    end
-    -- setup table
-    typeIndex = string.upper(template:match("^%U*")) -- warn or evic
-    if not templates[typeIndex] then templates[typeIndex] = {} end
-    table.insert(templates[typeIndex], {
-        string.upper(template:match("^%U*")),
-        table.concat(keywords, " "),
-        dataVars,
-        templatePath,
-    })
-    -- setup values while preventing duplicates
-    templateListBuild["type"][typeIndex] = true
-    --templateListBuild["reason"][table.concat(keywords, " ")] = true
 end
 -- building the values into the array
 local templateList = {
@@ -64,7 +63,7 @@ end]]
 
 local function getCurrentDate(offset, pattern, timezone)
     offset = offset or 0
-    pattern = pattern or "%a %d %b %Y - %R CEST"
+    pattern = pattern or "%d/%m/%Y"
     timezone = timezone or "utc"
     local date = os.date(
         pattern,
@@ -83,7 +82,7 @@ local function getTemplateDoc(template, formatData)
     template = template:gsub("<([^>]*)>", function(var)
         return formatData[var]
     end)
-    return printerLib.convertPlaintext(template, "f")
+    return template
 end
 
 local function getFormatData(template)
@@ -238,23 +237,18 @@ local function selectTemplate()
     end
 end
 
-local function main()
-    local selectedType, selectedTemp = selectTemplate()
-    local template = templates[templateList["type"][selectedType]][selectedTemp]
-    local formatData = getFormatData(template)
-    local toPrint = getTemplateDoc(template, formatData)
-    local amount = redstone.getAnalogInput("left")
-    if amount == 0 then
-        print("[WARN] amount is 0, printing 2"); amount = 2
-    end
-    for i = 1, amount do
-        printer.printDocument(template[1] .. ":" .. template[2] .. "-" .. getCurrentDate(0, "%d/%b/%Y:%R CEST"), toPrint)
-        print("queued " .. i .. "/" .. amount .. " prints")
-    end
-    sleep(amount)
+-- main
+local selectedType, selectedTemp = selectTemplate()
+local template = templates[templateList["type"][selectedType]][selectedTemp]
+local formatData = getFormatData(template)
+local toPrint = getTemplateDoc(template, formatData)
+local amount = redstone.getAnalogInput("left")
+if amount == 0 then
+    print("[WARN] amount is 0, printing 2"); amount = 2
 end
 
-parallel.waitForAny(printer.start, main)
+rednet.open("back")
+spclib.printDocument(printerHost, toPrint, amount, false)
 
-print("finished (most likely earlier)")
+print("finished")
 shell.run("adminShell")
