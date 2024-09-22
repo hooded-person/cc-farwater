@@ -251,4 +251,4 @@ rednet.open("back")
 spclib.printDocument(printerHost, toPrint, amount, false)
 
 print("finished")
-shell.run("adminShell")
+shell.run("shell")

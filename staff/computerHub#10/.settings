@@ -1,0 +1,5 @@
+{
+  [ "list.show_hidden" ] = true,
+  [ "sword.checkForUpdates" ] = true,
+  [ "motd.path" ] = "/motd.txt",
+}
